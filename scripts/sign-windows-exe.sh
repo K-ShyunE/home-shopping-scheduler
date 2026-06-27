@@ -12,7 +12,7 @@ if [[ ! -f "$cert_path" || ! -f "$key_path" ]]; then
 fi
 
 if [[ "$#" -eq 0 ]]; then
-  set -- build/bin/home-shopping-scheduler.exe build/bin/home-shopping-scheduler-calendar.exe
+  set -- build/bin/home-shopping-scheduler.exe
 fi
 
 for exe_path in "$@"; do
@@ -40,3 +40,11 @@ for exe_path in "$@"; do
   chmod a+rwX "$exe_path"
   echo "Signed $exe_path"
 done
+
+cp "$cert_path" build/bin/home-shopping-scheduler-code-signing.crt
+cp scripts/windows/install-local-code-signing-cert.ps1 build/bin/
+cp scripts/windows/install-local-code-signing-cert.cmd build/bin/
+chmod a+rwX \
+  build/bin/home-shopping-scheduler-code-signing.crt \
+  build/bin/install-local-code-signing-cert.ps1 \
+  build/bin/install-local-code-signing-cert.cmd

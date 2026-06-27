@@ -1,4 +1,5 @@
 build/bin/
+build/share/
 build/windows/installer/tmp/
 frontend/dist/
 frontend/node_modules/

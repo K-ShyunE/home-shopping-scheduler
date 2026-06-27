@@ -57,12 +57,16 @@ make build-windows
 make sign-windows
 ```
 
-지인 PC에서는 `certs/home-shopping-scheduler-code-signing.crt` 파일과 `scripts/windows/install-local-code-signing-cert.ps1`을 전달한 뒤, 관리자 권한 PowerShell에서 다음처럼 인증서를 등록합니다.
+`make sign-windows`까지 끝나면 지인에게 전달할 파일이 `build/bin`에 모입니다.
 
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\install-local-code-signing-cert.ps1 -CertificatePath .\home-shopping-scheduler-code-signing.crt
+```text
+build/bin/home-shopping-scheduler.exe
+build/bin/home-shopping-scheduler-code-signing.crt
+build/bin/install-local-code-signing-cert.cmd
+build/bin/install-local-code-signing-cert.ps1
 ```
+
+지인 PC에서는 최초 1회만 `install-local-code-signing-cert.cmd`를 더블클릭해서 인증서를 등록합니다. 관리자 권한 확인 창이 뜨면 허용해야 합니다. 이후 같은 인증서로 서명한 새 버전은 `home-shopping-scheduler.exe`만 전달하면 됩니다.
 
 이 방식은 공개 인증기관의 평판을 얻는 방식은 아니므로 모든 Smart App Control 환경에서 100% 통과를 보장하지는 않습니다. 그래도 지인 PC가 서명 인증서를 명시적으로 신뢰하게 만들어 무서명 exe 상태보다 낫습니다. `certs/` 폴더의 `.key`, `.pfx` 파일은 절대 공유하지 마세요.
 

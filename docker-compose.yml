@@ -18,7 +18,6 @@ services:
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
     command: >
       bash -c "bash scripts/build-wails.sh -platform windows/amd64 -clean -o home-shopping-scheduler.exe
-      && cp build/bin/home-shopping-scheduler.exe build/bin/home-shopping-scheduler-calendar.exe
       && chmod -R a+rwX build frontend/dist frontend/package-lock.json frontend/package.json.md5 go.mod go.sum"
 
   shell:
