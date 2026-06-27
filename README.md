@@ -47,6 +47,25 @@ NSIS 설치 파일까지 만들려면:
 make build-windows-installer
 ```
 
+## 지인 배포용 로컬 코드 서명
+
+Smart App Control은 무서명 앱을 신뢰할 수 없다고 판단하면 실행을 막을 수 있습니다. 공개 코드 서명 인증서를 쓰는 것이 정석이지만, 개인/지인 배포용으로는 자체 코드 서명 인증서를 만들고 지인 PC에 인증서를 등록한 뒤 exe를 서명할 수 있습니다.
+
+```bash
+make create-local-cert
+make build-windows
+make sign-windows
+```
+
+지인 PC에서는 `certs/home-shopping-scheduler-code-signing.crt` 파일과 `scripts/windows/install-local-code-signing-cert.ps1`을 전달한 뒤, 관리자 권한 PowerShell에서 다음처럼 인증서를 등록합니다.
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\install-local-code-signing-cert.ps1 -CertificatePath .\home-shopping-scheduler-code-signing.crt
+```
+
+이 방식은 공개 인증기관의 평판을 얻는 방식은 아니므로 모든 Smart App Control 환경에서 100% 통과를 보장하지는 않습니다. 그래도 지인 PC가 서명 인증서를 명시적으로 신뢰하게 만들어 무서명 exe 상태보다 낫습니다. `certs/` 폴더의 `.key`, `.pfx` 파일은 절대 공유하지 마세요.
+
 ## WSL + Docker Compose에서 Windows용 Wails 빌드
 
 가능합니다. Wails v2는 `wails build -platform windows/amd64`로 Linux/WSL 컨테이너에서 Windows용 `.exe`를 만들 수 있습니다.

@@ -13,6 +13,7 @@ RUN apt-get update \
       libgtk-3-dev \
       libwebkit2gtk-4.0-dev \
       nsis \
+      osslsigncode \
       pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
