@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>방송 일정 등록</title>
+  </head>
+  <body>
+    <main id="app">
+      <section class="workspace">
+        <header class="app-header">
+          <div class="brand-lockup">
+            <span class="brand-icon" aria-hidden="true"></span>
+            <div>
+              <p class="eyebrow">Home Shopping Scheduler</p>
+              <h1>방송 일정 등록기</h1>
+            </div>
+          </div>
+          <button id="settingsToggle" class="icon-text-button" type="button">
+            <span aria-hidden="true">⚙</span>
+            설정
+          </button>
+        </header>
+
+        <div class="app-layout">
+          <aside class="status-rail" aria-label="앱 상태">
+            <section id="connectionPanel" class="rail-panel" aria-label="Google 계정 연결">
+              <span id="connectionLabel" class="status-pill pending">연결 필요</span>
+              <strong id="connectionTitle">Google 계정 연결이 필요합니다</strong>
+              <p id="connectionText">
+                방송 일정을 등록하려면 한 번만 Google 계정을 연결해 주세요.
+              </p>
+              <div class="rail-actions">
+                <button id="connectGoogle" class="primary-button" type="button">
+                  Google 연결
+                </button>
+                <button id="checkConnection" class="secondary-button" type="button">
+                  확인
+                </button>
+              </div>
+            </section>
+
+            <section class="rail-panel compact" aria-label="등록 위치">
+              <div class="panel-title-row">
+                <strong>등록 위치</strong>
+                <button id="destinationToggle" class="mini-button" type="button">
+                  변경
+                </button>
+              </div>
+              <dl class="destination-list">
+                <div>
+                  <dt>스프레드시트</dt>
+                  <dd id="spreadsheetTitle">미설정</dd>
+                </div>
+                <div>
+                  <dt>캘린더</dt>
+                  <dd id="calendarTitle">미설정</dd>
+                </div>
+              </dl>
+            </section>
+          </aside>
+
+          <section class="form-surface" aria-label="방송 일정 등록 폼">
+            <div class="surface-heading">
+              <div>
+                <p class="eyebrow">새 일정</p>
+                <h2>방송 정보를 입력하세요</h2>
+              </div>
+              <span class="surface-badge">시트 + 캘린더 동시 등록</span>
+            </div>
+
+            <div class="date-strip">
+              <button id="prevDate" class="icon-button" type="button" title="이전 날짜">
+                ‹
+              </button>
+              <label class="date-field" for="dateInput">
+                <span>방송 날짜</span>
+                <input id="dateInput" type="text" autocomplete="off" inputmode="none" />
+              </label>
+              <button id="nextDate" class="icon-button" type="button" title="다음 날짜">
+                ›
+              </button>
+              <label class="time-field" for="timeInput">
+                <span>시간</span>
+                <span class="time-input-wrap">
+                  <input
+                    id="timeInput"
+                    type="text"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="HH:mm"
+                  />
+                  <button id="clearTime" class="clear-time-button" type="button" title="시간 지우기">
+                    ×
+                  </button>
+                </span>
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>홈쇼핑</span>
+                <select id="channelSelect"></select>
+              </label>
+
+              <label class="field">
+                <span>업체</span>
+                <select id="vendorSelect"></select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>제품</span>
+              <input
+                id="productInput"
+                type="text"
+                autocomplete="off"
+                placeholder="제품명을 입력하세요"
+              />
+            </label>
+
+            <label class="field quantity-field">
+              <span>수량</span>
+              <input id="quantityInput" type="number" min="0" inputmode="numeric" />
+              <small>비워두면 수량 없이 등록됩니다.</small>
+            </label>
+
+            <div class="summary-band">
+              <div>
+                <span class="summary-label">등록 내용</span>
+                <strong id="summaryText">오늘 방송 일정을 입력하세요.</strong>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="resetButton" class="secondary-button" type="button">
+                초기화
+              </button>
+              <button id="submitButton" class="primary-button" type="button">
+                시트와 캘린더에 등록
+              </button>
+            </div>
+
+            <output id="result" class="result-message">Google 계정을 연결하면 등록할 수 있습니다.</output>
+          </section>
+        </div>
+
+        <aside id="destinationPanel" class="side-panel destination-panel" aria-label="등록 위치 설정" hidden>
+          <div class="settings-header">
+            <div>
+              <p class="eyebrow">등록 위치</p>
+              <h2>시트와 캘린더</h2>
+            </div>
+            <button id="destinationClose" class="icon-button muted" type="button" title="닫기">
+              ×
+            </button>
+          </div>
+
+          <section class="destination-section">
+            <div>
+              <strong>스프레드시트</strong>
+              <p>방송 일정이 행으로 추가됩니다.</p>
+            </div>
+
+            <div class="segmented-control" role="group" aria-label="스프레드시트 연결 방식">
+              <label>
+                <input id="spreadsheetModeNew" name="spreadsheetMode" type="radio" value="new" />
+                <span>새로 만들기</span>
+              </label>
+              <label>
+                <input id="spreadsheetModeExisting" name="spreadsheetMode" type="radio" value="existing" />
+                <span>기존 선택</span>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>이름</span>
+              <input id="spreadsheetNameInput" type="text" autocomplete="off" />
+            </label>
+
+            <label class="field">
+              <span>Google Drive 폴더</span>
+              <select id="spreadsheetFolderSelect"></select>
+            </label>
+
+            <label class="field">
+              <span>기존 스프레드시트</span>
+              <select id="spreadsheetSelect"></select>
+            </label>
+          </section>
+
+          <section class="destination-section">
+            <div>
+              <strong>캘린더</strong>
+              <p>방송 일정이 이벤트로 등록됩니다.</p>
+            </div>
+
+            <div class="segmented-control" role="group" aria-label="캘린더 연결 방식">
+              <label>
+                <input id="calendarModeNew" name="calendarMode" type="radio" value="new" />
+                <span>새로 만들기</span>
+              </label>
+              <label>
+                <input id="calendarModeExisting" name="calendarMode" type="radio" value="existing" />
+                <span>기존 선택</span>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>이름</span>
+              <input id="calendarNameInput" type="text" autocomplete="off" />
+            </label>
+
+            <label class="field">
+              <span>기존 캘린더</span>
+              <select id="calendarSelect"></select>
+            </label>
+          </section>
+
+          <button id="saveDestination" class="primary-button full-button" type="button">
+            등록 위치 저장
+          </button>
+        </aside>
+
+        <aside id="settingsPanel" class="settings-panel" aria-label="설정" hidden>
+          <div class="settings-header">
+            <div>
+              <p class="eyebrow">관리 설정</p>
+              <h2>목록과 연결</h2>
+            </div>
+            <button id="settingsClose" class="icon-button muted" type="button" title="닫기">
+              ×
+            </button>
+          </div>
+
+          <label class="field">
+            <span>홈쇼핑 목록</span>
+            <textarea id="channelsInput" rows="5"></textarea>
+          </label>
+
+          <label class="field">
+            <span>업체 목록</span>
+            <textarea id="vendorsInput" rows="5"></textarea>
+          </label>
+
+          <div class="settings-note">
+            <strong>Google 연결</strong>
+            <p>
+              계정 연결은 메인 화면에서 진행합니다. 평소 사용자는 이 설정 화면을
+              열지 않아도 됩니다.
+            </p>
+          </div>
+
+          <button id="saveSettings" class="primary-button full-button" type="button">
+            설정 저장
+          </button>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
