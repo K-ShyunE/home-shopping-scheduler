@@ -78,6 +78,7 @@ let spreadsheetFolder = {
   id: settings.spreadsheet.folderID || "root",
   title: settings.spreadsheet.folderTitle || "내 드라이브",
 };
+let destinationDraft = null;
 let selectedDateValue = toDateValue(new Date());
 let datePicker = null;
 
@@ -192,26 +193,65 @@ function renderDestinationSummary() {
   elements.calendarTitle.textContent = settings.calendar.title || "미설정";
 }
 
+function createDestinationDraft() {
+  return {
+    spreadsheet: { ...settings.spreadsheet },
+    calendar: { ...settings.calendar },
+  };
+}
+
+function ensureDestinationDraft() {
+  if (!destinationDraft) {
+    destinationDraft = createDestinationDraft();
+  }
+  return destinationDraft;
+}
+
+function syncDestinationDraftFromPanel() {
+  if (!destinationDraft || elements.destinationPanel.hidden) {
+    return;
+  }
+
+  const selectedFolder = getSelectedSpreadsheetFolder();
+  destinationDraft = {
+    spreadsheet: {
+      ...destinationDraft.spreadsheet,
+      mode: selectedRadioValue("spreadsheetMode"),
+      id: elements.spreadsheetSelect.value,
+      title: elements.spreadsheetNameInput.value.trim() || destinationDraft.spreadsheet.title,
+      folderID: selectedFolder.id,
+      folderTitle: selectedFolder.title,
+    },
+    calendar: {
+      ...destinationDraft.calendar,
+      mode: selectedRadioValue("calendarMode"),
+      id: elements.calendarSelect.value,
+      title: elements.calendarNameInput.value.trim() || destinationDraft.calendar.title,
+    },
+  };
+}
+
 function renderDestinationPanel() {
-  const spreadsheetMode = settings.spreadsheet.mode || "new";
-  const calendarMode = settings.calendar.mode || "new";
+  const draft = ensureDestinationDraft();
+  const spreadsheetMode = draft.spreadsheet.mode || "new";
+  const calendarMode = draft.calendar.mode || "new";
   elements.spreadsheetModeNew.checked = spreadsheetMode === "new";
   elements.spreadsheetModeExisting.checked = spreadsheetMode === "existing";
-  elements.spreadsheetNameInput.value = settings.spreadsheet.title || defaults.spreadsheet.title;
+  elements.spreadsheetNameInput.value = draft.spreadsheet.title || defaults.spreadsheet.title;
   elements.calendarModeNew.checked = calendarMode === "new";
   elements.calendarModeExisting.checked = calendarMode === "existing";
-  elements.calendarNameInput.value = settings.calendar.title || defaults.calendar.title;
+  elements.calendarNameInput.value = draft.calendar.title || defaults.calendar.title;
   renderResourceOptions(
     elements.spreadsheetSelect,
     destinationOptions.spreadsheets,
-    settings.spreadsheet.id,
+    draft.spreadsheet.id,
     "선택 가능한 스프레드시트가 없습니다",
   );
   renderFolderOptions();
   renderResourceOptions(
     elements.calendarSelect,
     destinationOptions.calendars,
-    settings.calendar.id,
+    draft.calendar.id,
     "선택 가능한 캘린더가 없습니다",
   );
   updateDestinationFields();
@@ -452,6 +492,7 @@ function saveSettingsFromPanel() {
 }
 
 function saveDestinationFromPanel() {
+  syncDestinationDraftFromPanel();
   const spreadsheetMode = selectedRadioValue("spreadsheetMode");
   const calendarMode = selectedRadioValue("calendarMode");
   const selectedSpreadsheet = destinationOptions.spreadsheets.find((item) => item.id === elements.spreadsheetSelect.value);
@@ -494,7 +535,7 @@ function saveDestinationFromPanel() {
 
   saveSettings();
   renderDestinationSummary();
-  renderDestinationPanel();
+  destinationDraft = null;
   elements.result.value = "등록 위치가 저장되었습니다.";
   elements.destinationPanel.hidden = true;
 }
@@ -580,6 +621,7 @@ async function loadDestinationOptions() {
 }
 
 async function loadSpreadsheetFolder(parentID = "root") {
+  syncDestinationDraftFromPanel();
   const response = await callApp("ListGoogleDriveFolder", parentID);
   if (!response.ok) {
     destinationOptions = {
@@ -592,7 +634,8 @@ async function loadSpreadsheetFolder(parentID = "root") {
     return;
   }
 
-  const selectedOption = elements.spreadsheetFolderSelect.querySelector(`option[value="${parentID}"]`);
+  const selectedOption = Array.from(elements.spreadsheetFolderSelect.options)
+    .find((option) => option.value === parentID);
   spreadsheetFolder = {
     id: response.parentID || parentID,
     title: parentID === "root"
@@ -628,11 +671,13 @@ function bindEvents() {
   elements.destinationToggle.addEventListener("click", async () => {
     elements.destinationPanel.hidden = false;
     elements.settingsPanel.hidden = true;
+    destinationDraft = createDestinationDraft();
     renderDestinationPanel();
     await loadDestinationOptions();
     await loadSpreadsheetFolder(spreadsheetFolder.id);
   });
   elements.destinationClose.addEventListener("click", () => {
+    destinationDraft = null;
     elements.destinationPanel.hidden = true;
   });
   elements.saveDestination.addEventListener("click", saveDestinationFromPanel);
@@ -645,12 +690,16 @@ function bindEvents() {
     elements.calendarModeNew,
     elements.calendarModeExisting,
   ].forEach((element) => {
-    element.addEventListener("change", updateDestinationFields);
+    element.addEventListener("change", () => {
+      syncDestinationDraftFromPanel();
+      updateDestinationFields();
+    });
   });
 
   elements.settingsToggle.addEventListener("click", () => {
     elements.settingsPanel.hidden = false;
     elements.destinationPanel.hidden = true;
+    destinationDraft = null;
     renderSettings();
   });
 
