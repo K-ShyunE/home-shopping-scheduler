@@ -54,6 +54,14 @@ do
   mv "$tmp_script" "$windows_script"
 done
 
+ps1_script="build/bin/install-local-code-signing-cert.ps1"
+tmp_script="${ps1_script}.tmp"
+{
+  printf '\357\273\277'
+  cat "$ps1_script"
+} > "$tmp_script"
+mv "$tmp_script" "$ps1_script"
+
 chmod a+rwX \
   build/bin/home-shopping-scheduler-code-signing.crt \
   build/bin/install-local-code-signing-cert.ps1 \
