@@ -44,6 +44,16 @@ done
 cp "$cert_path" build/bin/home-shopping-scheduler-code-signing.crt
 cp scripts/windows/install-local-code-signing-cert.ps1 build/bin/
 cp scripts/windows/install-local-code-signing-cert.cmd build/bin/
+
+for windows_script in \
+  build/bin/install-local-code-signing-cert.ps1 \
+  build/bin/install-local-code-signing-cert.cmd
+do
+  tmp_script="${windows_script}.tmp"
+  awk '{ sub(/\r$/, ""); printf "%s\r\n", $0 }' "$windows_script" > "$tmp_script"
+  mv "$tmp_script" "$windows_script"
+done
+
 chmod a+rwX \
   build/bin/home-shopping-scheduler-code-signing.crt \
   build/bin/install-local-code-signing-cert.ps1 \
