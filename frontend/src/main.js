@@ -455,8 +455,15 @@ function resetForm() {
 
 function showToast(message, tone = "success") {
   window.clearTimeout(toastTimer);
-  elements.toast.textContent = message;
   elements.toast.className = `toast ${tone}`;
+  elements.toast.innerHTML = "";
+  const icon = document.createElement("span");
+  icon.className = "toast-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = "✓";
+  const text = document.createElement("span");
+  text.textContent = message;
+  elements.toast.append(icon, text);
   elements.toast.hidden = false;
   requestAnimationFrame(() => {
     elements.toast.classList.add("visible");
@@ -470,6 +477,10 @@ function showToast(message, tone = "success") {
       }
     }, 220);
   }, 2600);
+}
+
+if (import.meta.env.DEV) {
+  window.previewToast = () => showToast("시트와 캘린더에 등록했습니다.");
 }
 
 function userErrorMessage(error, fallback) {
