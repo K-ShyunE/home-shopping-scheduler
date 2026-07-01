@@ -438,6 +438,8 @@ small {
   z-index: 10;
   display: grid;
   width: min(440px, 100%);
+  max-height: calc(100vh - 116px);
+  overflow-y: auto;
   gap: 16px;
   padding: 20px;
 }
@@ -449,6 +451,10 @@ small {
 
 .destination-panel {
   width: min(500px, 100%);
+}
+
+.settings-panel {
+  width: min(680px, 100%);
 }
 
 .destination-section {
@@ -531,6 +537,118 @@ small {
   color: #5f6570;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.list-editor-section {
+  display: grid;
+  gap: 10px;
+}
+
+.list-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.list-editor-heading strong {
+  color: #1f2b37;
+  font-size: 16px;
+}
+
+.list-editor-table {
+  overflow: hidden;
+  background: #f8fafb;
+  border: 1px solid #e0e6ec;
+  border-radius: 8px;
+}
+
+.list-editor-body {
+  display: grid;
+  max-height: 236px;
+  overflow-y: auto;
+}
+
+.list-editor-row {
+  display: grid;
+  grid-template-columns: 76px minmax(150px, 1fr) minmax(120px, 0.55fr) 48px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+  border-top: 1px solid #e0e6ec;
+}
+
+.list-editor-head {
+  color: #667481;
+  background: #eef3f6;
+  border-top: 0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.order-controls {
+  display: grid;
+  grid-template-columns: repeat(2, 32px);
+  gap: 6px;
+}
+
+.list-icon-button {
+  display: grid;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  place-items: center;
+  color: #304252;
+  background: #e5ebf0;
+  border-radius: 7px;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.list-icon-button:hover {
+  background: #d9e3eb;
+}
+
+.list-editor-row input {
+  min-height: 40px;
+  padding: 0 10px;
+}
+
+.toast {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 20;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 14px 16px;
+  color: #17352d;
+  background: #e1f6ee;
+  border: 1px solid #b8e5d4;
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(24, 39, 52, 0.18);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success {
+  color: #17352d;
+  background: #e1f6ee;
+  border-color: #b8e5d4;
 }
 
 .full-button {
@@ -653,6 +771,26 @@ small {
   .settings-panel {
     position: static;
     width: 100%;
+    max-height: none;
     margin-top: 16px;
+  }
+
+  .list-editor-table {
+    overflow-x: auto;
+  }
+
+  .list-editor-body {
+    max-height: 220px;
+  }
+
+  .list-editor-row {
+    min-width: 560px;
+  }
+
+  .toast {
+    top: 14px;
+    right: 14px;
+    left: 14px;
+    max-width: none;
   }
 }

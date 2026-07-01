@@ -2,8 +2,18 @@ import Litepicker from "litepicker";
 import "./style.css";
 
 const defaults = {
-  channels: ["GS SHOP", "CJ온스타일", "현대홈쇼핑", "롯데홈쇼핑", "NS홈쇼핑"],
-  vendors: ["기본 업체", "샘플 협력사", "테스트 브랜드"],
+  channels: [
+    { name: "GS SHOP", alias: "GS" },
+    { name: "CJ온스타일", alias: "CJ" },
+    { name: "현대홈쇼핑", alias: "현대" },
+    { name: "롯데홈쇼핑", alias: "롯데" },
+    { name: "NS홈쇼핑", alias: "NS" },
+  ],
+  vendors: [
+    { name: "기본 업체", alias: "" },
+    { name: "샘플 협력사", alias: "" },
+    { name: "테스트 브랜드", alias: "" },
+  ],
   spreadsheet: {
     mode: "new",
     id: "",
@@ -57,9 +67,12 @@ const elements = {
   settingsToggle: document.querySelector("#settingsToggle"),
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsClose: document.querySelector("#settingsClose"),
-  channelsInput: document.querySelector("#channelsInput"),
-  vendorsInput: document.querySelector("#vendorsInput"),
+  channelsEditor: document.querySelector("#channelsEditor"),
+  vendorsEditor: document.querySelector("#vendorsEditor"),
+  addChannel: document.querySelector("#addChannel"),
+  addVendor: document.querySelector("#addVendor"),
   saveSettings: document.querySelector("#saveSettings"),
+  toast: document.querySelector("#toast"),
 };
 
 let settings = loadSettings();
@@ -79,25 +92,56 @@ let spreadsheetFolder = {
   title: settings.spreadsheet.folderTitle || "내 드라이브",
 };
 let destinationDraft = null;
+let settingsDraft = null;
 let selectedDateValue = toDateValue(new Date());
 let datePicker = null;
+let toastTimer = null;
 
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
-    return {
+    const loaded = {
       ...defaults,
       ...saved,
       spreadsheet: { ...defaults.spreadsheet, ...saved?.spreadsheet },
       calendar: { ...defaults.calendar, ...saved?.calendar },
     };
+    return normalizeSettings(loaded);
   } catch {
-    return { ...defaults };
+    return normalizeSettings({ ...defaults });
   }
 }
 
 function saveSettings() {
   localStorage.setItem(storageKey, JSON.stringify(settings));
+}
+
+function normalizeSettings(value) {
+  return {
+    ...value,
+    channels: normalizeNamedItems(value.channels, defaults.channels),
+    vendors: normalizeNamedItems(value.vendors, defaults.vendors),
+  };
+}
+
+function normalizeNamedItems(items, fallback) {
+  const source = Array.isArray(items) ? items : fallback;
+  const normalized = source
+    .map((item) => {
+      if (typeof item === "string") {
+        return { name: item.trim(), alias: "" };
+      }
+
+      return {
+        name: String(item?.name || "").trim(),
+        alias: String(item?.alias || "").trim(),
+      };
+    })
+    .filter((item) => item.name);
+
+  return normalized.length > 0
+    ? normalized
+    : fallback.map((item) => ({ ...item }));
 }
 
 function toDateValue(date) {
@@ -161,26 +205,66 @@ function setSelectedDate(value, syncPicker = true) {
   updateSummary();
 }
 
-function parseLines(value) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function renderOptions(select, items) {
   select.innerHTML = "";
   items.forEach((item) => {
     const option = document.createElement("option");
-    option.value = item;
-    option.textContent = item;
+    option.value = item.name;
+    option.textContent = item.name;
     select.append(option);
   });
 }
 
 function renderSettings() {
-  elements.channelsInput.value = settings.channels.join("\n");
-  elements.vendorsInput.value = settings.vendors.join("\n");
+  const source = settingsDraft || settings;
+  renderListEditor(elements.channelsEditor, source.channels, "channel");
+  renderListEditor(elements.vendorsEditor, source.vendors, "vendor");
+}
+
+function renderListEditor(container, items, type) {
+  container.innerHTML = "";
+  items.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "list-editor-row";
+    row.dataset.type = type;
+    row.dataset.index = String(index);
+
+    const orderControls = document.createElement("div");
+    orderControls.className = "order-controls";
+
+    const upButton = createListButton("↑", "위로 이동", "move-up", index === 0);
+    const downButton = createListButton("↓", "아래로 이동", "move-down", index === items.length - 1);
+    orderControls.append(upButton, downButton);
+
+    const nameInput = document.createElement("input");
+    nameInput.className = "list-name-input";
+    nameInput.type = "text";
+    nameInput.autocomplete = "off";
+    nameInput.value = item.name;
+    nameInput.placeholder = "풀네임";
+
+    const aliasInput = document.createElement("input");
+    aliasInput.className = "list-alias-input";
+    aliasInput.type = "text";
+    aliasInput.autocomplete = "off";
+    aliasInput.value = item.alias;
+    aliasInput.placeholder = item.name || "비우면 풀네임";
+
+    const deleteButton = createListButton("×", "삭제", "delete-row", items.length <= 1);
+    row.append(orderControls, nameInput, aliasInput, deleteButton);
+    container.append(row);
+  });
+}
+
+function createListButton(text, title, action, disabled = false) {
+  const button = document.createElement("button");
+  button.className = "list-icon-button";
+  button.type = "button";
+  button.textContent = text;
+  button.title = title;
+  button.dataset.action = action;
+  button.disabled = disabled;
+  return button;
 }
 
 function renderFormOptions() {
@@ -369,21 +453,61 @@ function resetForm() {
   elements.result.value = "새 일정을 입력하세요.";
 }
 
+function showToast(message, tone = "success") {
+  window.clearTimeout(toastTimer);
+  elements.toast.textContent = message;
+  elements.toast.className = `toast ${tone}`;
+  elements.toast.hidden = false;
+  requestAnimationFrame(() => {
+    elements.toast.classList.add("visible");
+  });
+
+  toastTimer = window.setTimeout(() => {
+    elements.toast.classList.remove("visible");
+    window.setTimeout(() => {
+      if (!elements.toast.classList.contains("visible")) {
+        elements.toast.hidden = true;
+      }
+    }, 220);
+  }, 2600);
+}
+
+function userErrorMessage(error, fallback) {
+  const detail = error?.message || String(error || "").trim();
+  if (!detail) {
+    return fallback;
+  }
+  return `${fallback} 상세: ${detail}`;
+}
+
 function destinationReady() {
   return Boolean(settings.spreadsheet.title && settings.calendar.title);
 }
 
 function getPayload() {
+  const channel = findNamedItem(settings.channels, elements.channelSelect.value);
+  const vendor = findNamedItem(settings.vendors, elements.vendorSelect.value);
+
   return {
     date: selectedDateValue,
     time: elements.timeInput.value.trim(),
-    channel: elements.channelSelect.value,
-    vendor: elements.vendorSelect.value,
+    channel: channel.name,
+    vendor: vendor.name,
+    calendarChannel: calendarLabel(channel),
+    calendarVendor: calendarLabel(vendor),
     product: elements.productInput.value.trim(),
     quantity: elements.quantityInput.value.trim(),
     spreadsheet: settings.spreadsheet,
     calendar: settings.calendar,
   };
+}
+
+function findNamedItem(items, name) {
+  return items.find((item) => item.name === name) || { name, alias: "" };
+}
+
+function calendarLabel(item) {
+  return item.alias || item.name;
 }
 
 async function submitForm() {
@@ -439,7 +563,12 @@ async function submitForm() {
     saveSettings();
     renderDestinationSummary();
     resetForm();
-    elements.result.value = response.message;
+    showToast(response.message || "시트와 캘린더에 등록했습니다.");
+  } catch (error) {
+    elements.result.value = userErrorMessage(
+      error,
+      "앱 내부 호출 중 오류가 발생해 등록 결과를 확인하지 못했습니다. 같은 일정이 이미 등록됐을 수 있으니 시트와 캘린더를 확인한 뒤 다시 시도해 주세요.",
+    );
   } finally {
     elements.submitButton.disabled = false;
   }
@@ -468,27 +597,118 @@ function clearTime() {
 }
 
 function saveSettingsFromPanel() {
+  const channels = readListEditor(elements.channelsEditor);
+  const vendors = readListEditor(elements.vendorsEditor);
+
   settings = {
     ...settings,
-    channels: parseLines(elements.channelsInput.value),
-    vendors: parseLines(elements.vendorsInput.value),
+    channels,
+    vendors,
   };
 
   if (settings.channels.length === 0) {
-    settings.channels = [...defaults.channels];
+    settings.channels = defaults.channels.map((item) => ({ ...item }));
   }
 
   if (settings.vendors.length === 0) {
-    settings.vendors = [...defaults.vendors];
+    settings.vendors = defaults.vendors.map((item) => ({ ...item }));
   }
 
   saveSettings();
+  settingsDraft = null;
   renderFormOptions();
   renderSettings();
   renderDestinationSummary();
   updateSummary();
   elements.result.value = "설정이 저장되었습니다.";
   elements.settingsPanel.hidden = true;
+}
+
+function readListEditor(container) {
+  return Array.from(container.querySelectorAll(".list-editor-row"))
+    .map((row) => ({
+      name: row.querySelector(".list-name-input")?.value.trim() || "",
+      alias: row.querySelector(".list-alias-input")?.value.trim() || "",
+    }))
+    .filter((item) => item.name);
+}
+
+function syncSettingsDraftFromEditors() {
+  if (elements.settingsPanel.hidden) {
+    return;
+  }
+
+  settingsDraft = {
+    ...(settingsDraft || settings),
+    channels: readListEditor(elements.channelsEditor),
+    vendors: readListEditor(elements.vendorsEditor),
+  };
+}
+
+function updateListEditor(type, updater) {
+  syncSettingsDraftFromEditors();
+  const key = type === "channel" ? "channels" : "vendors";
+  const source = settingsDraft || settings;
+  settingsDraft = {
+    ...source,
+    [key]: updater(source[key]),
+  };
+  renderSettings();
+}
+
+function addListItem(type) {
+  updateListEditor(type, (items) => [
+    ...items,
+    { name: "", alias: "" },
+  ]);
+
+  const container = type === "channel" ? elements.channelsEditor : elements.vendorsEditor;
+  container.querySelector(".list-editor-row:last-child .list-name-input")?.focus();
+}
+
+function moveListItem(type, index, direction) {
+  updateListEditor(type, (items) => {
+    const next = [...items];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= next.length) {
+      return next;
+    }
+
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    return next;
+  });
+}
+
+function deleteListItem(type, index) {
+  updateListEditor(type, (items) => {
+    if (items.length <= 1) {
+      return items;
+    }
+
+    return items.filter((_, itemIndex) => itemIndex !== index);
+  });
+}
+
+function handleListEditorClick(event) {
+  const button = event.target.closest(".list-icon-button");
+  if (!button) {
+    return;
+  }
+
+  const row = button.closest(".list-editor-row");
+  const type = row?.dataset.type;
+  const index = Number(row?.dataset.index);
+  if (!type || Number.isNaN(index)) {
+    return;
+  }
+
+  if (button.dataset.action === "move-up") {
+    moveListItem(type, index, -1);
+  } else if (button.dataset.action === "move-down") {
+    moveListItem(type, index, 1);
+  } else if (button.dataset.action === "delete-row") {
+    deleteListItem(type, index);
+  }
 }
 
 function saveDestinationFromPanel() {
@@ -567,12 +787,30 @@ async function callApp(methodName, ...args) {
 }
 
 async function loadGoogleStatus() {
-  googleStatus = await callApp("GetGoogleConnectionStatus");
+  try {
+    googleStatus = await callApp("GetGoogleConnectionStatus");
+  } catch (error) {
+    googleStatus = {
+      configured: false,
+      connected: false,
+      email: "",
+      message: userErrorMessage(error, "Google 연결 상태를 확인하지 못했습니다."),
+    };
+  }
   renderConnection();
 }
 
 async function connectGoogle() {
-  googleStatus = await callApp("StartGoogleConnect");
+  try {
+    googleStatus = await callApp("StartGoogleConnect");
+  } catch (error) {
+    googleStatus = {
+      configured: true,
+      connected: false,
+      email: "",
+      message: userErrorMessage(error, "Google 계정 연결을 시작하지 못했습니다."),
+    };
+  }
   renderConnection();
   elements.result.value = googleStatus.message;
 }
@@ -600,9 +838,22 @@ async function loadDestinationOptions() {
   }
 
   elements.result.value = "등록 위치 목록을 불러오는 중입니다.";
-  const response = await callApp("ListGoogleDestinations");
+  let response;
+  try {
+    response = await callApp("ListGoogleDestinations");
+  } catch (error) {
+    destinationOptions = {
+      folders: [],
+      spreadsheets: [],
+      calendars: [],
+    };
+    renderDestinationPanel();
+    elements.result.value = userErrorMessage(error, "등록 위치 목록을 불러오지 못했습니다.");
+    return;
+  }
   if (!response.ok) {
     destinationOptions = {
+      folders: [],
       spreadsheets: [],
       calendars: [],
     };
@@ -621,8 +872,30 @@ async function loadDestinationOptions() {
 }
 
 async function loadSpreadsheetFolder(parentID = "root") {
+  if (!googleStatus.connected) {
+    destinationOptions = {
+      ...destinationOptions,
+      folders: [],
+      spreadsheets: [],
+    };
+    renderDestinationPanel();
+    return;
+  }
+
   syncDestinationDraftFromPanel();
-  const response = await callApp("ListGoogleDriveFolder", parentID);
+  let response;
+  try {
+    response = await callApp("ListGoogleDriveFolder", parentID);
+  } catch (error) {
+    destinationOptions = {
+      ...destinationOptions,
+      folders: [],
+      spreadsheets: [],
+    };
+    renderDestinationPanel();
+    elements.result.value = userErrorMessage(error, "Google Drive 폴더 내용을 불러오지 못했습니다.");
+    return;
+  }
   if (!response.ok) {
     destinationOptions = {
       ...destinationOptions,
@@ -668,6 +941,10 @@ function bindEvents() {
   elements.connectGoogle.addEventListener("click", connectGoogle);
   elements.checkConnection.addEventListener("click", checkConnection);
   elements.saveSettings.addEventListener("click", saveSettingsFromPanel);
+  elements.addChannel.addEventListener("click", () => addListItem("channel"));
+  elements.addVendor.addEventListener("click", () => addListItem("vendor"));
+  elements.channelsEditor.addEventListener("click", handleListEditorClick);
+  elements.vendorsEditor.addEventListener("click", handleListEditorClick);
   elements.destinationToggle.addEventListener("click", async () => {
     elements.destinationPanel.hidden = false;
     elements.settingsPanel.hidden = true;
@@ -700,10 +977,16 @@ function bindEvents() {
     elements.settingsPanel.hidden = false;
     elements.destinationPanel.hidden = true;
     destinationDraft = null;
+    settingsDraft = {
+      ...settings,
+      channels: settings.channels.map((item) => ({ ...item })),
+      vendors: settings.vendors.map((item) => ({ ...item })),
+    };
     renderSettings();
   });
 
   elements.settingsClose.addEventListener("click", () => {
+    settingsDraft = null;
     elements.settingsPanel.hidden = true;
   });
 

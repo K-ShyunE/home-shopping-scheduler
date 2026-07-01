@@ -234,15 +234,37 @@
             </button>
           </div>
 
-          <label class="field">
-            <span>홈쇼핑 목록</span>
-            <textarea id="channelsInput" rows="5"></textarea>
-          </label>
+          <section class="list-editor-section">
+            <div class="list-editor-heading">
+              <strong>홈쇼핑 목록</strong>
+              <button id="addChannel" class="mini-button" type="button">추가</button>
+            </div>
+            <div class="list-editor-table" aria-label="홈쇼핑 목록">
+              <div class="list-editor-row list-editor-head">
+                <span>순서</span>
+                <span>풀네임</span>
+                <span>캘린더 약식</span>
+                <span>삭제</span>
+              </div>
+              <div id="channelsEditor" class="list-editor-body"></div>
+            </div>
+          </section>
 
-          <label class="field">
-            <span>업체 목록</span>
-            <textarea id="vendorsInput" rows="5"></textarea>
-          </label>
+          <section class="list-editor-section">
+            <div class="list-editor-heading">
+              <strong>업체 목록</strong>
+              <button id="addVendor" class="mini-button" type="button">추가</button>
+            </div>
+            <div class="list-editor-table" aria-label="업체 목록">
+              <div class="list-editor-row list-editor-head">
+                <span>순서</span>
+                <span>풀네임</span>
+                <span>캘린더 약식</span>
+                <span>삭제</span>
+              </div>
+              <div id="vendorsEditor" class="list-editor-body"></div>
+            </div>
+          </section>
 
           <div class="settings-note">
             <strong>Google 연결</strong>
@@ -257,6 +279,7 @@
           </button>
         </aside>
       </section>
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>

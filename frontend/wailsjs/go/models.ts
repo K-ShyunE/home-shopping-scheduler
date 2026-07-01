@@ -132,6 +132,8 @@ export namespace main {
 	    time: string;
 	    channel: string;
 	    vendor: string;
+	    calendarChannel: string;
+	    calendarVendor: string;
 	    product: string;
 	    quantity: string;
 	    spreadsheet: GoogleResourceSelection;
@@ -147,6 +149,8 @@ export namespace main {
 	        this.time = source["time"];
 	        this.channel = source["channel"];
 	        this.vendor = source["vendor"];
+	        this.calendarChannel = source["calendarChannel"];
+	        this.calendarVendor = source["calendarVendor"];
 	        this.product = source["product"];
 	        this.quantity = source["quantity"];
 	        this.spreadsheet = this.convertValues(source["spreadsheet"], GoogleResourceSelection);
